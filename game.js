@@ -37,53 +37,53 @@ function hash2(x, y) {
 // ---------------------------------------------------------------------------
 // World definitions
 // ---------------------------------------------------------------------------
-const WORLD = { w: 4200, h: 4200 };
-const OUTPOST = { x: 2100, y: 2100, r: 230, name: "WAYFARER'S REST" };
-const START = { x: 2190, y: 2180 };
-const RELAY = { x: 2236, y: 2088, name: 'THE RELAY' };
-const MARA = { x: 2034, y: 2046, name: 'MARA' };
+const WORLD = { w: 8400, h: 8400 };
+const OUTPOST = { x: 4200, y: 4200, r: 230, name: "WAYFARER'S REST" };
+const START = { x: 4380, y: 4360 };
+const RELAY = { x: 4472, y: 4176, name: 'THE RELAY' };
+const MARA = { x: 4068, y: 4092, name: 'MARA' };
 
 const CORE_SITES = ['stair', 'archive', 'cradle'];
 
 const SITE_DEFS = [
   {
     id: 'stair', name: 'THE STAIR', kicker: 'RUIN OF THE SECOND AGE',
-    x: 930, y: 750, w: 300, h: 218, tier: 3, core: true, seed: 41,
+    x: 1860, y: 1500, w: 300, h: 218, tier: 3, core: true, seed: 41,
     flavor: 'A stair to nowhere, still climbing into the sky.'
   },
   {
     id: 'cradle', name: 'CRADLE 7', kicker: 'COLONY FOUNDATION',
-    x: 3450, y: 1190, w: 286, h: 206, tier: 3, core: true, seed: 72,
+    x: 6900, y: 2380, w: 286, h: 206, tier: 3, core: true, seed: 72,
     flavor: 'The first children born here were told the stars were a story.'
   },
   {
     id: 'archive', name: 'THE DEEP ARCHIVE', kicker: 'SUBLEVEL RUIN',
-    x: 2050, y: 3590, w: 318, h: 228, tier: 3, core: true, seed: 19,
+    x: 4100, y: 7180, w: 318, h: 228, tier: 3, core: true, seed: 19,
     flavor: 'Every answer humanity owned, buried under ninety metres of sand.'
   },
   {
     id: 'pylons', name: 'NINE PYLONS', kicker: 'ORBITAL ANCHOR YARD',
-    x: 3010, y: 1890, w: 268, h: 190, tier: 1, seed: 7,
+    x: 6020, y: 3780, w: 268, h: 190, tier: 1, seed: 7,
     flavor: 'Eight pylons still stand. The ninth left without saying goodbye.'
   },
   {
     id: 'kettle', name: 'THE KETTLE', kicker: 'SETTLEMENT REMAINS',
-    x: 1330, y: 1960, w: 248, h: 180, tier: 1, seed: 88,
+    x: 2660, y: 3920, w: 248, h: 180, tier: 1, seed: 88,
     flavor: 'A circle of homes around a dry well. Someone scratched "later" on the door.'
   },
   {
     id: 'mirror', name: 'SALT MIRROR', kicker: 'EVAPORATION BASIN',
-    x: 3290, y: 2910, w: 274, h: 198, tier: 2, seed: 53,
+    x: 6580, y: 5820, w: 274, h: 198, tier: 2, seed: 53,
     flavor: 'A lake that dried so slowly it forgot it was ever water.'
   },
   {
     id: 'rust', name: 'OUR LADY OF RUST', kicker: 'MACHINE SHRINE',
-    x: 940, y: 2770, w: 266, h: 196, tier: 2, seed: 31,
+    x: 1880, y: 5540, w: 266, h: 196, tier: 2, seed: 31,
     flavor: 'They prayed to the harvesters. For a while, the harvesters answered.'
   },
   {
     id: 'hollow', name: 'THE HOLLOW', kicker: 'SINKHOLE RUIN',
-    x: 2510, y: 3010, w: 254, h: 186, tier: 2, seed: 64,
+    x: 5020, y: 6020, w: 254, h: 186, tier: 2, seed: 64,
     flavor: 'The ground opened. The town did not have time to disagree.'
   }
 ];
@@ -109,8 +109,8 @@ const SHOP_ITEMS = [
   { id: 'scanner', name: 'Long-range scanner', note: '+45% scan radius, faster recharge', price: 88, kind: 'upgrade' }
 ];
 
-const NODE_NAMES = { scrap: 'SALVAGE', cache: 'SEALED CACHE', core: 'ECHO CORE' };
-const NODE_HOLDS = { scrap: 1.55, cache: 2.15, core: 3.8 };
+const NODE_NAMES = { scrap: 'SALVAGE', cache: 'SEALED CACHE', core: 'ECHO CORE', fox: 'DESERT FOX', snake: 'SAND VIPER' };
+const NODE_HOLDS = { scrap: 1.55, cache: 2.15, core: 3.8, fox: 1.25, snake: 0.9 };
 
 // ---------------------------------------------------------------------------
 // DOM
@@ -309,6 +309,59 @@ function inWall(px, py, wall, margin = 0) {
          py > wall.y - margin && py < wall.y + wall.h + margin;
 }
 
+function generateProceduralSites(rng) {
+  const prefixes = ['ASHEN', 'BROKEN', 'LAST', 'SILENT', 'CINDER', 'DUST', 'HOLLOW', 'FAR'];
+  const nouns = ['OBSERVATORY', 'GARDEN', 'ENGINE', 'CISTERN', 'STATION', 'CAMP', 'TOWER', 'DEPOT', 'CHAPEL', 'FOUNDRY'];
+  const sites = [];
+  for (let i = 0; i < 12; i++) {
+    let x = 0, y = 0, ok = false;
+    for (let tries = 0; tries < 240 && !ok; tries++) {
+      x = 480 + rng() * (WORLD.w - 960);
+      y = 480 + rng() * (WORLD.h - 960);
+      ok = dist(x, y, OUTPOST.x, OUTPOST.y) > 620;
+      if (ok) for (const site of [...SITE_DEFS, ...sites]) {
+        if (dist(x, y, site.x, site.y) < 590) { ok = false; break; }
+      }
+    }
+    if (!ok) continue;
+    const prefix = prefixes[Math.floor(rng() * prefixes.length)];
+    const noun = nouns[Math.floor(rng() * nouns.length)];
+    sites.push({
+      id: `dr-${String(i + 1).padStart(2, '0')}`,
+      name: `${prefix} ${noun}`,
+      kicker: ['BURIED SETTLEMENT', 'OLD WORLD REMNANT', 'DESERT RUIN'][i % 3],
+      x, y, w: 214 + rng() * 74, h: 164 + rng() * 58,
+      tier: 1 + Math.floor(rng() * 2), seed: 130 + i * 17,
+      level: i % 3 === 0 ? 'basement' : i % 3 === 1 ? 'upper' : 'ground',
+      flavor: i % 2 ? 'The wind has kept its own counsel here.' : 'A fragment of a life the desert could not quite erase.'
+    });
+  }
+  return sites;
+}
+
+function generateWaypoints(rng, sites) {
+  const names = ['THE PALE ARCH', 'THIRSTY MILE', 'SINGER ROCK', 'THE CROOKED MARK', 'OLD SIGNAL', 'RED GLASS', 'THE LONG SHADOW', 'WIND’S TABLE', 'SALT TEETH', 'THE QUIET CUT', 'NORTH WASH', 'THE LOST MILE'];
+  const landmarks = [];
+  for (let i = 0; i < names.length; i++) {
+    let x = 0, y = 0, ok = false;
+    for (let tries = 0; tries < 160 && !ok; tries++) {
+      x = 300 + rng() * (WORLD.w - 600);
+      y = 300 + rng() * (WORLD.h - 600);
+      ok = dist(x, y, OUTPOST.x, OUTPOST.y) > 420;
+      for (const point of [...LANDMARKS, ...landmarks]) if (dist(x, y, point.x, point.y) < 440) { ok = false; break; }
+      if (ok) for (const site of [...SITE_DEFS, ...sites]) if (dist(x, y, site.x, site.y) < 300) { ok = false; break; }
+    }
+    if (ok) landmarks.push({
+      id: `waypoint-${String(i + 1).padStart(2, '0')}`, name: names[i],
+      kicker: 'DESERT WAYPOINT', x, y, type: ['marker', 'rock', 'well'][i % 3],
+      flavor: 'A weathered mark on a long and unforgiving road.'
+    });
+  }
+  return landmarks;
+}
+
+function allLandmarks() { return world ? world.landmarks : LANDMARKS; }
+
 function buildRuin(def) {
   const rng = mulberry32(def.seed * 997 + 13);
   const hw = def.w / 2, hh = def.h / 2, t = 14;
@@ -449,6 +502,9 @@ function initWorld() {
   for (let i = 0; i < 140; i++) {
     debris.push({ x: 50 + rng() * (WORLD.w - 100), y: 50 + rng() * (WORLD.h - 100), s: 2 + rng() * 5, a: rng() * TAU, tone: rng() });
   }
+  const generatedSites = generateProceduralSites(rng);
+  const landmarks = [...LANDMARKS, ...generateWaypoints(rng, generatedSites)];
+  const siteDefs = [...SITE_DEFS, ...generatedSites];
   const desertScrap = [];
   for (let i = 0; i < 26; i++) {
     let x, y, ok = false;
@@ -456,22 +512,41 @@ function initWorld() {
       x = 220 + rng() * (WORLD.w - 440);
       y = 220 + rng() * (WORLD.h - 440);
       ok = dist(x, y, OUTPOST.x, OUTPOST.y) > 360;
-      if (ok) for (const s of SITE_DEFS) if (dist(x, y, s.x, s.y) < s.w * 0.68) { ok = false; break; }
+      if (ok) for (const s of siteDefs) if (dist(x, y, s.x, s.y) < s.w * 0.68) { ok = false; break; }
     }
     if (ok) desertScrap.push({ id: `desert-${i}`, type: 'scrap', x, y, amount: 1 + Math.floor(rng() * 3) });
   }
-  const ruins = SITE_DEFS.map(buildRuin);
+  const ruins = siteDefs.map(buildRuin);
+  const animals = [];
+  for (let i = 0; i < 42; i++) {
+    let x, y, ok = false;
+    for (let tries = 0; tries < 70 && !ok; tries++) {
+      x = 180 + rng() * (WORLD.w - 360);
+      y = 180 + rng() * (WORLD.h - 360);
+      ok = dist(x, y, OUTPOST.x, OUTPOST.y) > 300;
+      if (ok) for (const site of siteDefs) {
+        if (dist(x, y, site.x, site.y) < Math.max(site.w, site.h) * 0.8) { ok = false; break; }
+      }
+      if (ok) for (const animal of animals) {
+        if (dist(x, y, animal.x, animal.y) < 280) { ok = false; break; }
+      }
+    }
+    if (ok) {
+      const type = rng() < 0.52 ? 'snake' : 'fox';
+      animals.push({ id: `animal-${i}`, type, x, y, food: type === 'fox' ? 18 + Math.floor(rng() * 13) : 10 + Math.floor(rng() * 9) });
+    }
+  }
   const stars = [];
   for (let i = 0; i < 170; i++) {
     stars.push({ x: rng(), y: rng() * 0.6, s: rng() * 1.5 + 0.3, tw: rng() * TAU });
   }
-  world = { dunes, rocks, shrubs, bones, debris, desertScrap, ruins, stars, mist: 0 };
+  world = { dunes, rocks, shrubs, bones, debris, desertScrap, animals, ruins, landmarks, stars, mist: 0 };
 }
 
 function allNodes() {
   const list = [];
   for (const r of world.ruins) list.push(...r.nodes);
-  list.push(...world.desertScrap);
+  list.push(...world.desertScrap, ...world.animals);
   return list;
 }
 
@@ -870,7 +945,7 @@ function openMap() {
         <div class="legend-row"><i class="legend-swatch core"></i><div><b>ECHO CORES</b><span>Rumored locations. Three are needed to wake the relay.</span></div></div>
         <div class="legend-row"><i class="legend-swatch ruin"></i><div><b>RUINS</b><span>Discovered sites. Scan the dunes to find more.</span></div></div>
         <div class="map-stats">
-          <span>RUINS MAPPED <b>${known} / 8</b></span>
+          <span>RUINS MAPPED <b>${known} / ${world.ruins.length}</b></span>
           <span>ECHO CORES <b>${state.cores.length} / 3</b></span>
           <span>DISTANCE WALKED <b>${(state.stats.distance / 1000).toFixed(1)} km</b></span>
           <span>SCRAP RECOVERED <b>${state.stats.scrap}</b></span>
@@ -949,7 +1024,7 @@ function drawMap() {
   // landmarks
   g.font = `${Math.max(8, w * 0.011)}px "SFMono-Regular", monospace`;
   g.textAlign = 'center';
-  for (const lm of LANDMARKS) {
+  for (const lm of allLandmarks()) {
     g.fillStyle = 'rgba(214,177,124,.25)';
     g.fillRect(X(lm.x) - 2, Y(lm.y) - 2, 4, 4);
     if (state.discovered['lm-' + lm.id]) {
@@ -1027,7 +1102,7 @@ function nearestInteractable() {
         best = {
           kind: 'node', node: n, hold: NODE_HOLDS[n.type],
           label: NODE_NAMES[n.type],
-          sub: n.type === 'core' ? 'HOLD TO EXTRACT' : n.type === 'cache' ? 'HOLD TO CRACK SEAL' : 'HOLD TO RECOVER SCRAP'
+          sub: n.type === 'core' ? 'HOLD TO EXTRACT' : n.type === 'cache' ? 'HOLD TO CRACK SEAL' : (n.type === 'fox' || n.type === 'snake') ? 'HOLD TO GATHER FOOD' : 'HOLD TO RECOVER SCRAP'
         };
       }
     }
@@ -1038,6 +1113,14 @@ function nearestInteractable() {
     if (d < 62 && d < bestD) {
       bestD = d;
       best = { kind: 'node', node: n, hold: NODE_HOLDS.scrap, label: 'LONE SALVAGE', sub: 'HOLD TO RECOVER SCRAP' };
+    }
+  }
+  for (const animal of world.animals) {
+    if (!state.nodes[animal.id]) continue;
+    const d = dist(p.x, p.y, animal.x, animal.y);
+    if (d < 62 && d < bestD) {
+      bestD = d;
+      best = { kind: 'node', node: animal, hold: NODE_HOLDS[animal.type], label: NODE_NAMES[animal.type], sub: 'HOLD TO GATHER FOOD' };
     }
   }
   const dMara = dist(p.x, p.y, MARA.x, MARA.y);
@@ -1101,6 +1184,17 @@ function completeNode(node) {
     state.stats.scrap += take;
     if (node.amount <= 0) state.nodes[node.id] = false;
     toast(`<b>${take} scrap</b> recovered.${node.amount > 0 ? ' There is more, but no room.' : ''}`, 'good');
+    Audio.pickup();
+  } else if (node.type === 'fox' || node.type === 'snake') {
+    state.nodes[node.id] = false;
+    state.food = Math.min(100, state.food + node.food);
+    const foundScrap = Math.random() < 0.04 && weight() < capacity();
+    if (foundScrap) {
+      state.scrap += 1;
+      state.stats.scrap++;
+    }
+    const animalName = node.type === 'fox' ? 'fox' : 'sand viper';
+    toast(`<b>${node.food} rations</b> gathered from the ${animalName}.${foundScrap ? ' A scrap fragment was caught in its gear.' : ''}`, 'good');
     Audio.pickup();
   } else if (node.type === 'cache') {
     state.nodes[node.id] = false;
@@ -1371,7 +1465,7 @@ function update(dt) {
       saveGame();
     }
   }
-  for (const lm of LANDMARKS) {
+  for (const lm of allLandmarks()) {
     if (!state.discovered['lm-' + lm.id] && dist(p.x, p.y, lm.x, lm.y) < 520) {
       state.discovered['lm-' + lm.id] = true;
       showLocation(lm.kicker, lm.name);
@@ -1383,7 +1477,7 @@ function update(dt) {
   let loc = '';
   for (const r of world.ruins) if (dist(p.x, p.y, r.x, r.y) < Math.max(r.w, r.h) * 0.72) loc = r.name;
   if (!loc && dist(p.x, p.y, OUTPOST.x, OUTPOST.y) < 250) loc = "WAYFARER'S REST";
-  if (!loc) for (const lm of LANDMARKS) if (dist(p.x, p.y, lm.x, lm.y) < 200) loc = lm.name;
+  if (!loc) for (const lm of allLandmarks()) if (dist(p.x, p.y, lm.x, lm.y) < 200) loc = lm.name;
   if (!loc) loc = 'THE OPEN DUST';
   state.location = loc;
 
@@ -1459,7 +1553,7 @@ function doScan() {
   for (const n of allNodes()) {
     if (state.nodes[n.id] && dist(p.x, p.y, n.x, n.y) < radius) contacts++;
   }
-  for (const lm of LANDMARKS) {
+  for (const lm of allLandmarks()) {
     if (dist(p.x, p.y, lm.x, lm.y) < radius * 1.4) {
       state.discovered['lm-' + lm.id] = true;
       contacts++;
@@ -1894,6 +1988,38 @@ function drawRuin(r) {
     ctx.fillRect(r.floor.x, r.floor.y, r.floor.w, r.floor.h);
   }
 
+  // Distinct level silhouettes make the procedural vertical variants readable at a glance.
+  if (r.level === 'upper') {
+    const px = r.floor.x + r.floor.w * 0.53, py = r.floor.y + r.floor.h * 0.18;
+    const pw = r.floor.w * 0.34, ph = r.floor.h * 0.3;
+    ctx.fillStyle = 'rgba(37,27,19,.52)';
+    ctx.fillRect(px + 7, py + 9, pw, ph);
+    ctx.fillStyle = 'rgba(166,127,83,.68)';
+    ctx.fillRect(px, py, pw, ph);
+    ctx.strokeStyle = 'rgba(225,190,143,.42)';
+    ctx.lineWidth = 2;
+    for (let x = px + 9; x < px + pw; x += 16) {
+      ctx.beginPath(); ctx.moveTo(x, py + 2); ctx.lineTo(x, py + ph - 2); ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(70,49,32,.75)';
+    ctx.fillRect(px - 10, py + ph - 8, 24, 30);
+    ctx.fillRect(px + pw - 13, py + ph - 8, 24, 30);
+  } else if (r.level === 'basement') {
+    const px = r.floor.x + r.floor.w * 0.56, py = r.floor.y + r.floor.h * 0.22;
+    const pw = r.floor.w * 0.28, ph = r.floor.h * 0.42;
+    ctx.fillStyle = 'rgba(25,19,15,.72)';
+    ctx.beginPath(); ctx.ellipse(px + pw / 2, py + ph / 2, pw / 2, ph / 2, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(196,156,106,.55)';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.ellipse(px + pw / 2, py + ph / 2, pw / 2 + 5, ph / 2 + 5, 0, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = 'rgba(225,187,139,.45)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 5; i++) {
+      const yy = py + ph * 0.55 + i * 7;
+      ctx.beginPath(); ctx.moveTo(px + pw * 0.55, yy); ctx.lineTo(px + pw * 0.9, yy); ctx.stroke();
+    }
+  }
+
   // cracks
   ctx.strokeStyle = 'rgba(38,28,20,.35)';
   ctx.lineWidth = 1;
@@ -2030,6 +2156,46 @@ function drawNode(n) {
     ctx.strokeRect(-8, -6, 16, 12);
     ctx.fillStyle = 'rgba(224,188,126,.7)';
     ctx.fillRect(-1, -1, 2, 4);
+  } else if (n.type === 'fox') {
+    const bob = Math.sin(t * 3 + n.x) * 1.2;
+    ctx.translate(0, bob);
+    ctx.fillStyle = 'rgba(43,29,18,.28)';
+    ctx.beginPath(); ctx.ellipse(1, 7, 13, 4, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#a4512e';
+    ctx.beginPath(); ctx.ellipse(-1, 0, 10, 5, -0.08, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-8, -1); ctx.quadraticCurveTo(-17, -10, -13, -3); ctx.quadraticCurveTo(-11, 1, -6, 3); ctx.fill();
+    ctx.fillStyle = '#d7b17e';
+    ctx.beginPath(); ctx.ellipse(8, -2, 5, 4, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#9b482b';
+    ctx.beginPath(); ctx.moveTo(6, -5); ctx.lineTo(7, -11); ctx.lineTo(11, -6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e4c08d';
+    ctx.beginPath(); ctx.moveTo(7.5, -6); ctx.lineTo(7.8, -9); ctx.lineTo(9.5, -6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#211812';
+    ctx.beginPath(); ctx.arc(10, -3, 0.8, 0, TAU); ctx.fill();
+    ctx.fillRect(-6, 3, 2, 4); ctx.fillRect(3, 3, 2, 4);
+  } else if (n.type === 'snake') {
+    const sway = Math.sin(t * 2.8 + n.y * 0.01) * 2;
+    ctx.fillStyle = 'rgba(43,29,18,.26)';
+    ctx.beginPath(); ctx.ellipse(0, 5, 14, 3.5, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#6f713d';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-12, 0);
+    ctx.bezierCurveTo(-7, -7 + sway, 0, 7 - sway, 7, 0);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(206,184,111,.68)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(-10, -1); ctx.quadraticCurveTo(-3, -5 + sway, 5, 0);
+    ctx.stroke();
+    ctx.fillStyle = '#8b8548';
+    ctx.beginPath(); ctx.ellipse(9, -1, 4, 3, -0.15, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#d7ad58';
+    ctx.beginPath(); ctx.arc(10, -2, 0.7, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#bb6242';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(12, 1); ctx.lineTo(15, 2); ctx.stroke();
   } else if (n.type === 'core') {
     // pedestal drawn by ruin, just glow/shimmer
     drawCoreIcon(n.x, n.y - 20, 0.9, 7);
@@ -2302,7 +2468,7 @@ function drawRelay() {
 // ---------------------------------------------------------------------------
 function drawLandmarks() {
   const p = state.player;
-  for (const lm of LANDMARKS) {
+  for (const lm of allLandmarks()) {
     if (dist(p.x, p.y, lm.x, lm.y) > 850) continue;
     ctx.save(); ctx.translate(lm.x, lm.y);
     if (lm.type === 'hand') {
@@ -2901,6 +3067,7 @@ function drawWorld(dt, freeze = false) {
   drawLandmarks();
   for (const r of world.ruins) drawRuin(r);
   for (const n of world.desertScrap) drawNode(n);
+  for (const animal of world.animals) drawNode(animal);
   drawOutpost();
   for (const r of world.ruins) for (const n of r.nodes) drawNode(n);
   drawPlayer();

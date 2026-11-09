@@ -38,6 +38,15 @@ html, body {
 
 body { touch-action: none; }
 
+@media (pointer: coarse) {
+  html, body, #stage, #stage * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 #stage {
   position: fixed;
   inset: 0;
