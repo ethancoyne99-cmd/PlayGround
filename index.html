@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#17110c">
+<meta name="description" content="The Long Dust — a desert survival and ruin-scavenging game. Walk the dead world, salvage what remains, and wake the relay.">
+<title>The Long Dust</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2317110c'/%3E%3Ccircle cx='32' cy='35' r='15' fill='none' stroke='%23e7b565' stroke-width='3'/%3E%3Cpath d='M13 47h38M20 54h30' stroke='%23c9804d' stroke-width='2'/%3E%3Ccircle cx='32' cy='26' r='4' fill='%2377d8c4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" aria-label="The Long Dust game world"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="screen-vignette" aria-hidden="true"></div>
+
+  <!-- ============ TITLE ============ -->
+  <section id="titleScreen" class="title-screen">
+    <div class="title-topline">
+      <span class="eyebrow">A NOMAD'S TALE</span>
+      <span class="title-year">YR. 10,412 AFTER THE LEAVING</span>
+    </div>
+
+    <div class="title-copy">
+      <div class="title-kicker"><span class="rule"></span> THE WORLD ENDED. THE SAND KEPT GOING.</div>
+      <h1>THE<br><em>LONG</em><br>DUST</h1>
+      <p class="title-blurb">Scavenge the ruins of a world that forgot you.<br>Keep your canteen full. Wake the dead relay.</p>
+      <div class="title-actions">
+        <button id="btnStart" class="btn btn-primary" data-action="new-game">
+          <span>BEGIN THE WALK</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        </button>
+        <button id="btnContinue" class="btn btn-quiet is-hidden" data-action="continue-game">CONTINUE JOURNEY</button>
+      </div>
+      <div class="title-features">
+        <span><i class="dot water"></i>WATER</span>
+        <span><i class="dot scrap"></i>SCRAP</span>
+        <span><i class="dot core"></i>ECHO CORES</span>
+      </div>
+    </div>
+
+    <div class="title-bottom">
+      <div class="title-controls">WASD / ARROWS <b>WALK</b> &nbsp;·&nbsp; SHIFT <b>RUN</b> &nbsp;·&nbsp; E <b>INTERACT</b> &nbsp;·&nbsp; Q <b>SCAN</b> &nbsp;·&nbsp; M <b>MAP</b></div>
+      <div class="sound-row">
+        <button id="btnSound" class="icon-btn" data-action="toggle-sound" aria-label="Toggle sound">
+          <svg viewBox="0 0 24 24" class="sound-on"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 9c1.6 1.6 1.6 4.4 0 6M19 6c3 3 3 9 0 12" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          <svg viewBox="0 0 24 24" class="sound-off"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </button>
+        <span>SOUND</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HUD ============ -->
+  <div id="hud" class="hud is-hidden" aria-live="polite">
+    <div class="hud-top">
+      <div class="dayplate">
+        <span class="day-label">DAY <b id="hudDay">01</b></span>
+        <span class="day-time" id="hudTime">07:20</span>
+        <span class="day-sep"></span>
+        <span class="day-place" id="hudPlace">THE OPEN DUST</span>
+      </div>
+      <div class="compass-wrap">
+        <canvas id="compass" width="520" height="42"></canvas>
+        <div class="compass-caption" id="hudBearing">E</div>
+      </div>
+      <div class="hud-actions">
+        <div class="envplate">
+          <span id="hudWeather">STILL AIR</span>
+          <b id="hudTemp">38°</b>
+        </div>
+        <button class="hud-btn" data-action="map" aria-label="Field map (M)">
+          <svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6zM9 4v14M15 6v14" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+        <button class="hud-btn" data-action="help" aria-label="How to play">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9.5 9.2a2.7 2.7 0 115 1.4c-.8 1-2.1 1.5-2.1 3" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12.2" cy="17.2" r="1" fill="currentColor"/></svg>
+        </button>
+        <button class="hud-btn" data-action="pause" aria-label="Pause (Esc)">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2.2" fill="none"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="vitals-card">
+      <div class="vital" data-vital="water">
+        <div class="vital-label"><span class="vital-icon water"></span>WATER <b id="waterVal">72</b></div>
+        <div class="bar"><i id="waterBar"></i></div>
+      </div>
+      <div class="vital" data-vital="food">
+        <div class="vital-label"><span class="vital-icon food"></span>RATIONS <b id="foodVal">80</b></div>
+        <div class="bar"><i id="foodBar"></i></div>
+      </div>
+      <div class="vital" data-vital="health">
+        <div class="vital-label"><span class="vital-icon health"></span>BODY <b id="healthVal">100</b></div>
+        <div class="bar"><i id="healthBar"></i></div>
+      </div>
+      <div class="pack-line">
+        <span>PACK <b id="packVal">0 / 18</b></span>
+        <span id="shelterState" class="shelter-state"></span>
+      </div>
+    </div>
+
+    <div class="radar-card">
+      <div class="radar-head"><span>FIELD SCANNER</span><b id="scanState">READY</b></div>
+      <div class="radar-ring">
+        <canvas id="radar" width="360" height="360"></canvas>
+        <i class="radar-n">N</i>
+      </div>
+      <div class="radar-foot"><span class="pulse-dot"></span><span id="radarHint">TAP Q TO PING</span></div>
+    </div>
+
+    <div class="objective-card" id="objectiveCard">
+      <div class="obj-kicker">CURRENT THREAD</div>
+      <div class="obj-title" id="objTitle">THE ECHO CORES</div>
+      <div class="obj-body" id="objBody">Recover three cores from the old relay ruins.</div>
+      <div class="obj-progress" id="objProgress"><i></i><i></i><i></i></div>
+    </div>
+
+    <div class="inventory-strip">
+      <div class="inv-item"><span class="inv-icon scrap"></span><b id="invScrap">0</b><small>SCRAP</small></div>
+      <div class="inv-item"><span class="inv-icon relic"></span><b id="invRelic">0</b><small>RELICS</small></div>
+      <div class="inv-item"><span class="inv-icon core"></span><b id="invCore">0</b><small>CORES</small></div>
+      <div class="inv-item credits"><span class="inv-icon credit"></span><b id="invCredits">12</b><small>CREDITS</small></div>
+    </div>
+
+    <div id="toastStack" class="toast-stack"></div>
+    <div id="locationBanner" class="location-banner"><span id="locationKicker">RUIN DISCOVERED</span><b id="locationName"></b></div>
+
+    <div id="interactPrompt" class="interact-prompt is-hidden">
+      <div class="keycap" id="interactKey">E</div>
+      <div class="interact-copy">
+        <span id="interactLabel">SALVAGE</span>
+        <b id="interactSub">HOLD TO RECOVER</b>
+      </div>
+      <div class="interact-progress"><i id="interactFill"></i></div>
+    </div>
+
+    <div class="bottom-hints">
+      <span><kbd>WASD</kbd> WALK</span>
+      <span><kbd>SHIFT</kbd> RUN</span>
+      <span><kbd>E</kbd> INTERACT</span>
+      <span><kbd>Q</kbd> SCAN</span>
+      <span><kbd>M</kbd> MAP</span>
+      <span><kbd>ESC</kbd> PAUSE</span>
+    </div>
+
+    <div id="touchControls" class="touch-controls">
+      <div id="joystick" class="joystick"><div id="joystickThumb" class="joystick-thumb"></div></div>
+      <div class="touch-actions">
+        <button class="touch-btn touch-map" data-action="map">MAP</button>
+        <button class="touch-btn touch-scan" data-action="scan">SCAN</button>
+        <button class="touch-btn touch-use" data-action="interact-down">E<small>USE</small></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ OVERLAY ============ -->
+  <div id="overlay" class="overlay is-hidden">
+    <div class="overlay-panel" id="overlayPanel" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <div id="fade" class="fade"></div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
